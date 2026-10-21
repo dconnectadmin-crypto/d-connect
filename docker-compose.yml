@@ -1,0 +1,11 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: dconnect
+      POSTGRES_PASSWORD: dconnect
+      POSTGRES_DB: dconnect
+    ports: ["5432:5432"]
+    volumes: ["dbdata:/var/lib/postgresql/data"]
+volumes:
+  dbdata:
