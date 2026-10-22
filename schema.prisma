@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  RIDER
+  CAPTAIN
+  ADMIN
+}
+
+enum TripType {
+  ONE_WAY
+  ROUND_TRIP
+}
+
+enum BookingStatus {
+  REQUESTED
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(RIDER)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  ridden   Booking[]        @relation("RiderBookings")
+  driven   Booking[]        @relation("CaptainBookings")
+  location CaptainLocation?
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  riderId     String
+  captainId   String?
+  pickup      String
+  destination String
+  type        TripType
+  returnAt    DateTime?
+  category    String
+  distanceKm  Float
+  waitHours   Float         @default(0)
+  total       Decimal       @db.Decimal(10, 2)
+  status      BookingStatus @default(REQUESTED)
+  createdAt   DateTime      @default(now())
+  acceptedAt  DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  rider   User  @relation("RiderBookings", fields: [riderId], references: [id])
+  captain User? @relation("CaptainBookings", fields: [captainId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([riderId])
+  @@index([captainId, status])
+}
+
+model CaptainLocation {
+  captainId String   @id
+  lat       Float
+  lng       Float
+  heading   Float?
+  updatedAt DateTime @updatedAt
+
+  captain User @relation(fields: [captainId], references: [id], onDelete: Cascade)
+}
