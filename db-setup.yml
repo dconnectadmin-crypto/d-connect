@@ -1,0 +1,46 @@
+# ONE-TIME / on-demand database setup for your REAL (Neon/Vercel Postgres) database, run from GitHub (no laptop needed).
+# Needs 3 repository secrets: DATABASE_URL, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD  (Settings > Secrets and variables > Actions).
+# Safe: `prisma db push` WITHOUT --accept-data-loss refuses any change that would delete data. It never resets the database.
+name: db-setup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SEED_ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
+      SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check the three secrets exist (values are never printed)
+        run: |
+          for v in DATABASE_URL SEED_ADMIN_EMAIL SEED_ADMIN_PASSWORD; do
+            if [ -z "${!v}" ]; then echo "MISSING secret: $v"; exit 1; fi
+          done
+          echo "secrets present"
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Prisma validate and generate
+        run: |
+          npx prisma validate
+          npx prisma generate
+
+      - name: Create/update tables (no data loss allowed)
+        run: npx prisma db push --skip-generate
+
+      - name: Create the first admin (does nothing if it already exists)
+        run: npm run db:seed
