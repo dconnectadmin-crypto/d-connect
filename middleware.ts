@@ -27,3 +27,10 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 export const config = { matcher: ["/rider/:path*", "/captain/:path*", "/admin/:path*", "/api/:path*"] };
+
+
+
+
+
+
+
