@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { COOKIE, roleHome, verifyToken, type Role } from "@/lib/token";
+import { COOKIE, roleHome, verifyToken, type Role } from "./lib/token";
 
 const areas: Record<string, Role> = { "/rider": "RIDER", "/captain": "CAPTAIN", "/admin": "ADMIN" };
 
